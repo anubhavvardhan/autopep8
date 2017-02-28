@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+
 """Update example in readme."""
 
 import io
+import os
 import sys
 import textwrap
 
@@ -45,7 +47,8 @@ def help_message():
     parser = autopep8.create_parser()
     string_io = io.StringIO()
     parser.print_help(string_io)
-    return string_io.getvalue()
+    # Undo home directory expansion.
+    return string_io.getvalue().replace(os.path.expanduser('~'), '~')
 
 
 def check(source):
@@ -71,7 +74,7 @@ def main():
 
     output_code = autopep8.fix_code(
         input_code,
-        options=autopep8.parse_args(['', '-aa']))
+        options={'aggressive': 2})
 
     check(output_code)
 

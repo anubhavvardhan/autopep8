@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Test that autopep8 runs without crashing on various Python files."""
 
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 
 import argparse
@@ -44,7 +46,8 @@ def colored(text, color):
 def run(filename, command, max_line_length=79,
         ignore='', check_ignore='', verbose=False,
         comparison_function=None,
-        aggressive=0, experimental=False, line_range=None, random_range=False):
+        aggressive=0, experimental=False, line_range=None, random_range=False,
+        pycodestyle=True):
     """Run autopep8 on file at filename.
 
     Return True on success.
@@ -61,22 +64,22 @@ def run(filename, command, max_line_length=79,
                 '--ignore=' + ignore, filename] +
                aggressive * ['--aggressive'] +
                (['--experimental'] if experimental else []) +
-               (['--range', str(line_range[0]), str(line_range[1])]
+               (['--line-range', str(line_range[0]), str(line_range[1])]
                 if line_range else []))
 
     print(' '.join(command), file=sys.stderr)
 
     with tempfile.NamedTemporaryFile(suffix='.py') as tmp_file:
-        if 0 != subprocess.call(command, stdout=tmp_file):
+        if subprocess.call(command, stdout=tmp_file) != 0:
             sys.stderr.write('autopep8 crashed on ' + filename + '\n')
             return False
 
-        if 0 != subprocess.call(
-            ['pep8',
+        if pycodestyle and subprocess.call(
+            [pycodestyle,
              '--ignore=' + ','.join([x for x in ignore.split(',') +
                                      check_ignore.split(',') if x]),
              '--show-source', tmp_file.name],
-                stdout=sys.stdout):
+                stdout=sys.stdout) != 0:
             sys.stderr.write('autopep8 did not completely fix ' +
                              filename + '\n')
 
@@ -117,9 +120,11 @@ def process_args():
     compare_bytecode_ignore = 'E71,E721,W'
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--command',
-                        default=os.path.join(ROOT_PATH, 'autopep8.py'),
-                        help='autopep8 command (default: %(default)s)')
+    parser.add_argument(
+        '--command',
+        default='{0} {1}'.format(sys.executable,
+                                 os.path.join(ROOT_PATH, 'autopep8.py')),
+        help='autopep8 command (default: %(default)s)')
     parser.add_argument('--ignore',
                         help='comma-separated errors to ignore',
                         default='')
@@ -137,11 +142,14 @@ def process_args():
                         help='run autopep8 in aggressive mode')
     parser.add_argument('--experimental', action='store_true',
                         help='run experimental fixes')
-    parser.add_argument('--range', metavar='line', dest='line_range',
+    parser.add_argument('--line-range', metavar='line',
                         default=None, type=int, nargs=2,
-                        help='pass --range to autope8')
+                        help='pass --line-range to autope8')
     parser.add_argument('--random-range', action='store_true',
-                        help='pass random --range to autope8')
+                        help='pass random --line-range to autope8')
+    parser.add_argument('--pycodestyle', default='pycodestyle',
+                        help='location of pycodestyle; '
+                             'set to empty string to disable this check')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='print verbose messages')
     parser.add_argument('paths', nargs='*',
@@ -227,7 +235,8 @@ def check(paths, args):
                            aggressive=args.aggressive,
                            experimental=args.experimental,
                            line_range=args.line_range,
-                           random_range=args.random_range):
+                           random_range=args.random_range,
+                           pycodestyle=args.pycodestyle):
                     return False
         except (UnicodeDecodeError, UnicodeEncodeError) as exception:
             # Ignore annoying codec problems on Python 2.

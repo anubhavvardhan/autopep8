@@ -11,7 +11,7 @@ from setuptools import setup
 
 
 INSTALL_REQUIRES = (
-    ['pep8 >= 1.5.7'] +
+    ['pycodestyle >= 2.2'] +
     (['argparse'] if sys.version_info < (2, 7) else [])
 )
 
@@ -49,10 +49,11 @@ with io.open('README.rst') as readme:
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Software Development :: Quality Assurance',
         ],
-        keywords='automation, pep8, format',
+        keywords='automation, pep8, format, pycodestyle',
         install_requires=INSTALL_REQUIRES,
         test_suite='test.test_autopep8',
         py_modules=['autopep8'],

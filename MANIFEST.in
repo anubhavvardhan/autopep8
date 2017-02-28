@@ -10,6 +10,7 @@ include test/example/x.py
 include test/example_with_reduce.py
 include test/example.py
 include test/iso_8859_1.py
+include test/fake_configuration/.pep8
 recursive-exclude test/suite *.py
 recursive-exclude test/suite/out *.py
 exclude .travis.yml
@@ -21,7 +22,6 @@ exclude hooks/pre-push
 exclude install_hooks.bash
 exclude test/.gitignore
 exclude test/acid.py
-exclude test/acid_github.py
 exclude test/acid_pypi.py
 exclude test/suite
 exclude test/suite/out

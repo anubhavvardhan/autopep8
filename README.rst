@@ -7,12 +7,12 @@ autopep8
     :alt: Build status
 
 autopep8 automatically formats Python code to conform to the `PEP 8`_ style
-guide. It uses the pep8_ utility to determine what parts of the code needs to
-be formatted. autopep8 is capable of fixing most of the formatting issues_ that
-can be reported by pep8.
+guide. It uses the pycodestyle_ utility to determine what parts of the code
+needs to be formatted. autopep8 is capable of fixing most of the formatting
+issues_ that can be reported by pycodestyle.
 
-.. _PEP 8: http://www.python.org/dev/peps/pep-0008/
-.. _issues: https://pep8.readthedocs.org/en/latest/intro.html#error-codes
+.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _issues: https://pycodestyle.readthedocs.org/en/latest/intro.html#error-codes
 
 .. contents::
 
@@ -26,15 +26,15 @@ From pip::
 
 Consider using the ``--user`` option_.
 
-.. _option: https://pip.readthedocs.org/en/latest/user_guide.html#user-installs
+.. _option: https://pip.pypa.io/en/latest/user_guide/#user-installs
 
 
 Requirements
 ============
 
-autopep8 requires pep8_.
+autopep8 requires pycodestyle_.
 
-.. _pep8: https://github.com/jcrocholl/pep8
+.. _pycodestyle: https://github.com/PyCQA/pycodestyle
 
 
 Usage
@@ -103,8 +103,7 @@ After running autopep8.
         return (some_tuple, some_variable)
 
 
-    def example2():
-        return ('' in {'f': 2}) in {'has_key() is deprecated': True}
+    def example2(): return ('' in {'f': 2}) in {'has_key() is deprecated': True}
 
 
     class Example3(object):
@@ -124,10 +123,11 @@ After running autopep8.
 
 Options::
 
-    usage: autopep8 [-h] [--version] [-v] [-d] [-i] [-r] [-j n] [-p n] [-a]
+    usage: autopep8 [-h] [--version] [-v] [-d] [-i] [--global-config filename]
+                    [--ignore-local-config] [-r] [-j n] [-p n] [-a]
                     [--experimental] [--exclude globs] [--list-fixes]
                     [--ignore errors] [--select errors] [--max-line-length n]
-                    [--range line line] [--indent-size n]
+                    [--line-range line line]
                     [files [files ...]]
 
     Automatically formats Python code to conform to the PEP 8 style guide.
@@ -142,6 +142,14 @@ Options::
                             verbose messages
       -d, --diff            print the diff for the fixed source
       -i, --in-place        make changes to files in place
+      --global-config filename
+                            path to a global pep8 config file; if this file does
+                            not exist then this is ignored (default:
+                            ~/.config/pep8)
+      --ignore-local-config
+                            don't look for and apply local config files; if not
+                            passed, defaults are updated with any config files in
+                            the project's root directory
       -r, --recursive       run recursively over directories; must be used with
                             --in-place or --diff
       -j n, --jobs n        number of parallel jobs; match CPU count if value is
@@ -158,16 +166,16 @@ Options::
       --ignore errors       do not fix these errors/warnings (default: E24)
       --select errors       fix only these errors/warnings (e.g. E4,W)
       --max-line-length n   set maximum allowed line length (default: 79)
-      --range line line     only fix errors found within this inclusive range of
+      --line-range line line, --range line line
+                            only fix errors found within this inclusive range of
                             line numbers (e.g. 1 99); line numbers are indexed at
                             1
-      --indent-size n       number of spaces per indent level (default 4)
 
 
 Features
 ========
 
-autopep8 fixes the following issues_ reported by pep8_::
+autopep8 fixes the following issues_ reported by pycodestyle_::
 
     E101 - Reindent all lines.
     E121 - Fix indentation to be a multiple of four.
@@ -214,7 +222,7 @@ autopep8 fixes the following issues_ reported by pep8_::
     W604 - Use "repr()" instead of backticks.
     W690 - Fix various deprecated code (via lib2to3).
 
-autopep8 also fixes some issues not found by pep8_.
+autopep8 also fixes some issues not found by pycodestyle_.
 
 - Correct deprecated or non-idiomatic Python code (via ``lib2to3``). Use this
   for making Python 2.6 and 2.7 code more compatible with Python 3. (This is
@@ -227,14 +235,15 @@ autopep8 also fixes some issues not found by pep8_.
 - Remove blank lines between a function declaration and its docstring. (Enabled
   with ``E303``.)
 
-autopep8 avoids fixing some issues found by pep8_.
+autopep8 avoids fixing some issues found by pycodestyle_.
 
 - ``E112``/``E113`` for non comments are reports of bad indentation that break
   syntax rules. These should not be modified at all.
 - ``E265``, which refers to spacing after comment hash, is ignored if the
   comment looks like code. autopep8 avoids modifying these since they are not
-  real comments. If you really want to get rid of the pep8_ warning, consider
-  just removing the commented-out code. (This can be automated via eradicate_.)
+  real comments. If you really want to get rid of the pycodestyle_ warning,
+  consider just removing the commented-out code. (This can be automated via
+  eradicate_.)
 
 .. _eradicate: https://github.com/myint/eradicate
 
@@ -283,18 +292,21 @@ Use as a module
 ===============
 
 The simplest way of using autopep8 as a module is via the ``fix_code()``
-function.
+function:
 
->>> import autopep8
->>> autopep8.fix_code('x=       123\n')
-'x = 123\n'
+    >>> import autopep8
+    >>> autopep8.fix_code('x=       123\n')
+    'x = 123\n'
 
-Or with command-line options:
+Or with options:
 
->>> import autopep8
->>> autopep8.fix_code('x.has_key(y)\n',
-...                   options=autopep8.parse_args(['--aggressive', '']))
-'y in x\n'
+    >>> import autopep8
+    >>> autopep8.fix_code('x.has_key(y)\n',
+    ...                   options={'aggressive': 1})
+    'y in x\n'
+    >>> autopep8.fix_code('print( 123 )\n',
+    ...                   options={'ignore': ['E']})
+    'print( 123 )\n'
 
 
 Testing
@@ -303,7 +315,7 @@ Testing
 Test cases are in ``test/test_autopep8.py``. They can be run directly via
 ``python test/test_autopep8.py`` or via tox_. The latter is useful for
 testing against multiple Python interpreters. (We currently test against
-CPython versions 2.6, 2.7, 3.2, and 3.3. We also test against PyPy.)
+CPython versions 2.6, 2.7, 3.3, 3.4, and 3.5. We also test against PyPy.)
 
 .. _`tox`: https://pypi.python.org/pypi/tox
 
@@ -311,8 +323,7 @@ Broad spectrum testing is available via ``test/acid.py``. This script runs
 autopep8 against Python code and checks for correctness and completeness of the
 code fixes. It can check that the bytecode remains identical.
 ``test/acid_pypi.py`` makes use of ``acid.py`` to test against the latest
-released packages on PyPI. In a similar fashion, ``test/acid_github.py`` tests
-against Python code in Github repositories.
+released packages on PyPI.
 
 
 Troubleshooting

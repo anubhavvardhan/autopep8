@@ -11,28 +11,28 @@ PYTHON?=python
 COVERAGE?=coverage
 
 TEST_DIR=test
-.PHONY: test
+
 test: test_basic test_diff test_unit
 fasttest: test_fast
 
 test_basic:
 	@echo '--->  Running basic test'
-	${PYTHON} autopep8.py --aggressive test/example.py > .tmp.test.py
-	pep8 --repeat .tmp.test.py
+	@${PYTHON} autopep8.py --aggressive test/example.py > .tmp.test.py
+	pycodestyle --repeat .tmp.test.py
 	@rm .tmp.test.py
 
 test_diff:
 	@echo '--->  Running --diff test'
 	@cp test/example.py .tmp.example.py
-	${PYTHON} autopep8.py --aggressive --diff .tmp.example.py > .tmp.example.py.patch
+	@${PYTHON} autopep8.py --aggressive --diff .tmp.example.py > .tmp.example.py.patch
 	patch < .tmp.example.py.patch
 	@rm .tmp.example.py.patch
-	pep8 --repeat .tmp.example.py && ${PYTHON} -m py_compile .tmp.example.py
+	pycodestyle --repeat .tmp.example.py && ${PYTHON} -m py_compile .tmp.example.py
 	@rm .tmp.example.py
 
 test_unit:
 	@echo '--->  Running unit tests'
-	${PYTHON} test/test_autopep8.py
+	@${PYTHON} test/test_autopep8.py
 
 test_fast:
 	@echo '[run]' > .pytest.coveragerc
@@ -56,15 +56,15 @@ open_coverage: coverage
 	@python -m webbrowser -n "file://${PWD}/htmlcov/index.html"
 
 benchmark:
-	@echo '---> benchmark of autopep8.py test/example.py'
+	@echo '--->  Benchmark of autopep8.py test/example.py'
 	@time ${PYTHON} autopep8.py --aggressive test/example.py > /dev/null
-	@echo '---> benchmark of test_unit'
+	@echo '--->  Benchmark of test_unit'
 	@time ${PYTHON} test/test_autopep8.py > /dev/null
-	@echo '---> benchmark of autopep8.py -d test/*.py'
+	@echo '--->  Benchmark of autopep8.py -d test/*.py'
 	@time ${PYTHON} autopep8.py -d test/*.py > /dev/null
 
 readme:
-	${PYTHON} update_readme.py
+	@${PYTHON} update_readme.py
 	@rstcheck README.rst
 	@${PYTHON} -m doctest -v README.rst
 
@@ -72,13 +72,16 @@ open_readme: readme
 	@python -m webbrowser -n "file://${PWD}/README.html"
 
 check:
-	pep8 autopep8.py setup.py test/acid.py test/acid_github.py test/acid_pypi.py update_readme.py
+	pycodestyle \
+		--ignore=E402 \
+		autopep8.py setup.py test/acid.py test/acid_pypi.py update_readme.py
 	pylint \
 		--reports=no \
 		--msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
 		--disable=bad-builtin \
 		--disable=bad-continuation \
 		--disable=fixme \
+		--disable=import-error \
 		--disable=invalid-name \
 		--disable=locally-disabled \
 		--disable=missing-docstring \
@@ -86,13 +89,17 @@ check:
 		--disable=no-self-use \
 		--disable=not-callable \
 		--disable=protected-access \
+		--disable=redefined-builtin \
 		--disable=star-args \
+		--disable=super-on-old-class \
 		--disable=too-few-public-methods \
 		--disable=too-many-arguments \
+		--disable=too-many-boolean-expressions \
 		--disable=too-many-branches \
 		--disable=too-many-instance-attributes \
 		--disable=too-many-lines \
 		--disable=too-many-locals \
+		--disable=too-many-nested-blocks \
 		--disable=too-many-public-methods \
 		--disable=too-many-statements \
 		--disable=undefined-loop-variable \
@@ -100,25 +107,10 @@ check:
 	pylint \
 		--reports=no \
 		--msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}' \
-		--max-module-lines=2500 \
-		--disable=bad-continuation \
-		--disable=blacklisted-name \
-		--disable=duplicate-code \
-		--disable=import-error \
-		--disable=invalid-name \
-		--disable=line-too-long \
-		--disable=star-args \
-		--disable=missing-docstring \
+		--errors-only \
 		--disable=no-member \
-		--disable=protected-access \
-		--disable=too-many-arguments \
-		--disable=too-many-branches \
-		--disable=too-many-lines \
-		--disable=too-many-public-methods \
 		--rcfile=/dev/null \
-		--dummy-variables-rgx='^_+$$' \
-		--disable=fixme \
-		test/acid.py test/acid_github.py test/acid_pypi.py test/test_autopep8.py
+		test/acid.py test/acid_pypi.py test/test_autopep8.py
 	./autopep8.py --diff autopep8.py setup.py test/test_autopep8.py update_readme.py
 
 mutant:
@@ -132,3 +124,8 @@ clean:
 	rm -rf .tmp.test.py temp *.pyc *egg-info dist build \
 		__pycache__ */__pycache__ */*/__pycache__ \
 		htmlcov coverage.xml
+
+.PHONY: \
+	all clean mutant pypireg test_basic test_unit \
+	benchmark coverage open_coverage readme test_diff \
+	check fasttest open_readme test test_fast

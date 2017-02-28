@@ -2,25 +2,54 @@
 
 map <C-I> :pyfile <path_to>/vim_autopep8.py<CR>
 
+Replace ":pyfile" with ":py3file" if Vim is built with Python 3 support.
+
 """
 
+from __future__ import unicode_literals
+
+import sys
+
 import vim
-if vim.eval('&syntax') == 'python':
-    encoding = vim.eval('&fileencoding')
-    source = '\n'.join(line.decode(encoding)
-                       for line in vim.current.buffer) + '\n'
+
+
+ENCODING = vim.eval('&fileencoding')
+
+
+def encode(text):
+    if sys.version_info[0] >= 3:
+        return text
+    else:
+        return text.encode(ENCODING)
+
+
+def decode(text):
+    if sys.version_info[0] >= 3:
+        return text
+    else:
+        return text.decode(ENCODING)
+
+
+def main():
+    if vim.eval('&syntax') != 'python':
+        return
+
+    source = '\n'.join(decode(line)
+                        for line in vim.current.buffer) + '\n'
 
     import autopep8
-    options = autopep8.parse_args(['--range',
-                                   str(1 + vim.current.range.start),
-                                   str(1 + vim.current.range.end),
-                                   ''])
-
-    formatted = autopep8.fix_code(source, options=options)
+    formatted = autopep8.fix_code(
+        source,
+        options={'line_range': [1 + vim.current.range.start,
+                                1 + vim.current.range.end]})
 
     if source != formatted:
         if formatted.endswith('\n'):
             formatted = formatted[:-1]
 
-        vim.current.buffer[:] = [line.encode(encoding)
+        vim.current.buffer[:] = [encode(line)
                                  for line in formatted.splitlines()]
+
+
+if __name__ == '__main__':
+    main()
